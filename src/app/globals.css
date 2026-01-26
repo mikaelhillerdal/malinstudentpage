@@ -4,3 +4,42 @@
 
 :root { color-scheme: light; }
 body { @apply bg-white text-zinc-900; }
+
+/* Gradient text utility */
+.gradient-text {
+  background-image: linear-gradient(
+    90deg,
+    #22d3ee 0%,   /* cyan */
+    #a855f7 50%,  /* purple */
+    #ca0baa 100%  /* red */
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* All headings use gradient text */
+h1,
+h2,
+h3,
+h4 {
+  @apply gradient-text;
+}
+
+/* Navbar gradient links */
+.nav-link {
+  @apply rounded-xl px-3 py-2 text-zinc-700 transition-all;
+}
+
+.nav-link:hover {
+  @apply bg-zinc-50;
+}
+
+.nav-link:hover span {
+  @apply gradient-text;
+}
+
+.nav-link.active span {
+  @apply gradient-text font-semibold;
+}
+
