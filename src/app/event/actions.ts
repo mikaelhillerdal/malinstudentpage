@@ -5,8 +5,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const Schema = z.object({
   attending: z.boolean(),
-  party_size: z.number().int().min(1).max(20)
+  party_size: z.number().int().min(0).max(20)
 });
+
 
 export async function saveRsvp(input: { attending: boolean; party_size: number }) {
   const parsed = Schema.safeParse(input);
