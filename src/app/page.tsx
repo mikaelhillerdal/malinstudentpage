@@ -5,8 +5,7 @@ export default function HomePage() {
   return (
     <div className="grid gap-6">
       <div className="rounded-3xl border p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold tracking-tight">Malin’s Student Celebration</h1>
-        <p className="mt-2 max-w-2xl text-zinc-600">Private event page with RSVP + a unicorn puzzle game.</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Malin’s Student Celebration</h1>        
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Link className="rounded-2xl bg-zinc-900 px-5 py-3 text-white shadow-sm hover:opacity-90" href="/login">
@@ -20,11 +19,20 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Secure" description="Only invited users can log in and RSVP." />
-        <Card title="Installable" description="Works as a PWA (Add to Home Screen)." />
+    
+      <div className="mt-10 overflow-hidden rounded-3xl border bg-white p-6 shadow-sm dark:bg-zinc-950">
+        
+        <div className="mt-6 flex justify-center">
+          <img
+            src="/unicorn.png"
+            alt="Silly unicorn"
+            className="w-[520px] max-w-full select-none"
+            draggable={false}
+          />
+        </div>
       </div>
-    </div>
+
+
+    </div>    
   );
 }

@@ -37,11 +37,7 @@ export default function LoginPage() {
 
       {/* Unicorn animation */}
       <div className="relative overflow-hidden rounded-3xl border p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">A silly unicorn crashes the party…</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          It runs in and leaves a rainbow surprise.
-        </p>
-
+        
         <div className="mt-6">
           <div className="relative h-[300px] rounded-2xl bg-white">
             {/* Ground */}
