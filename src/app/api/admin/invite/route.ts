@@ -100,7 +100,6 @@ export async function POST(req: Request) {
     attachments: [{ filename: "invite.ics", content: Buffer.from(ics).toString("base64") }]
   });
 
-  // @ts-expect-error resend typing varies
   if (sent?.error) return NextResponse.json({ error: sent.error.message }, { status: 400 });
 
   return NextResponse.json({ ok: true });
