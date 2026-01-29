@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { EventRsvpForm } from "./ui";
 
@@ -50,11 +51,13 @@ export default async function EventPage() {
     <div className="relative overflow-hidden">
       {/* Unicorn background character (head) */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-0 hidden md:block w-1/2 overflow-hidden">
-        <img
+<Image
           src="/unicorn.png"
           alt=""
-          aria-hidden="true"
+          aria-hidden={true}
           draggable={false}
+          width={950}
+          height={950}
           className="
             absolute
             left-[-22%]

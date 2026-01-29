@@ -69,7 +69,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b bg-white/70 backdrop-blur dark:bg-zinc-950/70">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link href="/" className="font-semibold tracking-tight">
-          <span className="gradient-text gradient-anim gradient-anim-hover">Malin's Student Page</span>{" "}          
+          <span className="gradient-text gradient-anim gradient-anim-hover">Malin&apos;s Student Page</span>{" "}          
         </Link>
 
         {/* Desktop nav */}

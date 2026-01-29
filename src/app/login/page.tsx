@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { LoginForm } from "./ui";
 
 function Sparkles() {
@@ -47,9 +48,11 @@ export default function LoginPage() {
             {/* Runner */}
             <div className="runner absolute left-0 bottom-14">
               <div className="bounce relative">
-                <img
+<Image
                   src="/unicorn.png"
                   alt="Silly unicorn"
+                  width={200}
+                  height={200}
                   className="unicorn-img select-none"
                   draggable={false}
                 />
