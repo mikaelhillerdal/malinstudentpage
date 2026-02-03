@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   const startIso = process.env.EVENT_START_ISO!;
   const endIso = process.env.EVENT_END_ISO!;
   const address = process.env.EVENT_ADDRESS || "";
-  const description = process.env.EVENT_DESCRIPTION || "";
+  const description = (process.env.EVENT_DESCRIPTION || "").replace(/\\n/g, "\n");
 
   const ics = buildIcs({
     uid: `${userId}@malinstudentpage`,
