@@ -4,19 +4,38 @@ import { EventRsvpForm } from "./ui";
 
 function formatDateTime(iso: string) {
   if (!iso) return { date: "—", time: "—" };
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return { date: "Invalid date", time: "Invalid time" };
+  const hasTz = /([zZ]|[+-]\d{2}:\d{2})$/.test(iso);
+  const d = hasTz ? new Date(iso) : null;
+  if (hasTz && (!d || Number.isNaN(d.getTime()))) return { date: "Invalid date", time: "Invalid time" };
+
+  // If the value lacks timezone info (common in some prod env setups), treat it as local
+  // time in Europe/Stockholm and format by splitting the string.
+  if (!hasTz) {
+    const m = iso.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+    if (!m) return { date: "Invalid date", time: "Invalid time" };
+    const [, datePart, timePart] = m;
+    const date = new Intl.DateTimeFormat("sv-SE", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Europe/Stockholm"
+    }).format(new Date(`${datePart}T00:00:00Z`));
+    return { date, time: timePart };
+  }
 
   const date = new Intl.DateTimeFormat("sv-SE", {
     year: "numeric",
     month: "long",
-    day: "numeric"
-  }).format(d);
+    day: "numeric",
+    timeZone: "Europe/Stockholm"
+  }).format(d!);
 
   const time = new Intl.DateTimeFormat("sv-SE", {
     hour: "2-digit",
-    minute: "2-digit"
-  }).format(d);
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Stockholm"
+  }).format(d!);
 
   return { date, time };
 }
