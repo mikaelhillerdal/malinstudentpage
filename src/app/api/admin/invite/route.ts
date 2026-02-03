@@ -71,9 +71,9 @@ export async function POST(req: Request) {
   const endIso = process.env.EVENT_END_ISO!;
   const address = process.env.EVENT_ADDRESS || "";
   const description = (process.env.EVENT_DESCRIPTION || "")
-    .replace(/\\r\\n/g, "\n")
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\n");
+    .replace(/\\+r\\+n/g, "\n")
+    .replace(/\\+n/g, "\n")
+    .replace(/\\+r/g, "\n");
 
   const ics = buildIcs({
     uid: `${userId}@malinstudentpage`,
