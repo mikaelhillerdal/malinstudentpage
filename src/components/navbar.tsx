@@ -7,11 +7,9 @@ import { applyTheme, getTheme, subscribeTheme } from "@/lib/theme";
 
 type NavItem = { href: string; label: string };
 
-const NAV: NavItem[] = [
+const NAV_PUBLIC: NavItem[] = [
   { href: "/event", label: "Event" },
-  { href: "/game", label: "Game" },
-  { href: "/admin", label: "Admin" },
-  { href: "/logout", label: "Logout" }
+  { href: "/game", label: "Game" }
 ];
 
 function isActive(pathname: string, href: string) {
@@ -56,13 +54,42 @@ function ThemeToggle() {
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState<{ user: null | { id: string; email: string | null }; isAdmin: boolean } | null>(
+    null
+  );
 
   // Close mobile menu when route changes
   useEffect(() => setOpen(false), [pathname]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/session", { cache: "no-store" });
+        const data = (await res.json()) as { user: null | { id: string; email: string | null }; isAdmin: boolean };
+        if (!cancelled) setSession(data);
+      } catch {
+        if (!cancelled) setSession({ user: null, isAdmin: false });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
   const items = useMemo(
-    () => NAV.map((i) => ({ ...i, active: isActive(pathname, i.href) })),
-    [pathname]
+    () => {
+      const isLoggedIn = Boolean(session?.user);
+      const isAdmin = Boolean(session?.isAdmin);
+
+      const nav: NavItem[] = [...NAV_PUBLIC];
+      if (isAdmin) nav.push({ href: "/admin", label: "Admin" });
+      if (isLoggedIn) nav.push({ href: "/logout", label: "Logout" });
+      else nav.push({ href: "/login", label: "Log in" });
+
+      return nav.map((i) => ({ ...i, active: isActive(pathname, i.href) }));
+    },
+    [pathname, session]
   );
 
   return (
