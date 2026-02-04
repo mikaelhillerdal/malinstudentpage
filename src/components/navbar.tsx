@@ -106,6 +106,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={item.href === "/admin" || item.href === "/logout" ? false : undefined}
                 className={`nav-link ${item.active ? "nav-link-active" : ""}`}
               >
                 <span className="nav-label">{item.label}</span>
@@ -142,6 +143,7 @@ export function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={item.href === "/admin" || item.href === "/logout" ? false : undefined}
                   className={`nav-link ${item.active ? "nav-link-active" : ""}`}
                 >
                   <span className="nav-label">{item.label}</span>
