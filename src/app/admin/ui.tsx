@@ -18,16 +18,25 @@ export function AdminInvitePanel() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function sendInvite() {
+    if (loading) return;
     setStatus(null);
-    const res = await fetch("/api/admin/invite", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, first_name: firstName, last_name: lastName, phone })
-    });
-    const data = await res.json();
-    setStatus(res.ok ? `Invite sent to ${email}` : (data?.error ?? "Failed"));
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/invite", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, first_name: firstName, last_name: lastName, phone })
+      });
+      const data = await res.json();
+      setStatus(res.ok ? `Invite sent to ${email}` : (data?.error ?? "Failed"));
+    } catch {
+      setStatus("Network error – try again");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -42,8 +51,8 @@ export function AdminInvitePanel() {
         <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Surname" className="rounded-2xl border px-4 py-3" />
       </div>
 
-      <button onClick={sendInvite} className="mt-4 rounded-2xl bg-zinc-900 px-5 py-3 text-white shadow-sm hover:opacity-90">
-        Send invite
+      <button onClick={sendInvite} disabled={loading} className="mt-4 rounded-2xl bg-zinc-900 px-5 py-3 text-white shadow-sm hover:opacity-90 disabled:opacity-50">
+        {loading ? "Sending…" : "Send invite"}
       </button>
 
       {status ? <p className="mt-3 text-sm text-zinc-700">{status}</p> : null}

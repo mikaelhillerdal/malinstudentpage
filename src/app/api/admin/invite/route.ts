@@ -53,16 +53,8 @@ export async function POST(req: Request) {
 
   if (!userId) return NextResponse.json({ error: "Could not create user" }, { status: 500 });
 
-  const up = await admin.from("profiles").upsert({
-    id: userId,
-    email,
-    first_name: first_name ?? null,
-    last_name: last_name ?? null,
-    phone: phone ?? null
-  });
-  if (up.error) return NextResponse.json({ error: up.error.message }, { status: 400 });
-
-  // Email + calendar (.ics)
+  // Email + calendar (.ics) — send BEFORE profile upsert so the invite
+  // is never blocked by a transient FK race-condition on brand-new users.
   const resend = new Resend(process.env.RESEND_API_KEY!);
   const siteUrl = process.env.SITE_URL || "http://localhost:3000";
 
@@ -106,5 +98,21 @@ export async function POST(req: Request) {
 
   if (sent?.error) return NextResponse.json({ error: sent.error.message }, { status: 400 });
 
-  return NextResponse.json({ ok: true });
+  // Upsert profile — retry a couple of times in case the auth.users row
+  // isn't visible to the FK constraint immediately after creation.
+  let profileError: string | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const up = await admin.from("profiles").upsert({
+      id: userId,
+      email,
+      first_name: first_name ?? null,
+      last_name: last_name ?? null,
+      phone: phone ?? null
+    });
+    if (!up.error) { profileError = null; break; }
+    profileError = up.error.message;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
+  return NextResponse.json({ ok: true, ...(profileError ? { profileWarning: profileError } : {}) });
 }
