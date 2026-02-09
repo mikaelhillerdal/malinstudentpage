@@ -96,7 +96,8 @@ export async function POST(req: Request) {
   `;
 
   const sent = await resend.emails.send({
-    from: "Student Invite <onboarding@resend.dev>",
+    from: "Malins Studentfirande <invite@hillerdal.com>",
+    replyTo: "mikael.hillerdal@gmail.com",
     to: [email],
     subject: `Invitation: ${title}`,
     html,
