@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { AdminInvitePanel, AdminRsvpTable } from "./ui";
+import { AdminInvitePanel, AdminRsvpTable, AdminThankYouPanel } from "./ui";
 
 export default async function AdminPage() {
   const supabase = createSupabaseServerClient();
@@ -15,6 +15,7 @@ export default async function AdminPage() {
   const merged = (profiles ?? []).map((p) => ({ ...p, rsvp: rsvpByUser.get(p.id) ?? null }));
 
   const totalAttending = merged.reduce((sum, row) => sum + (row.rsvp?.attending ? row.rsvp.party_size : 0), 0);
+  const attendeeAccounts = merged.filter((row) => row.rsvp?.attending).length;
 
   return (
     <div className="grid gap-6">
@@ -31,6 +32,7 @@ export default async function AdminPage() {
       </div>
 
       <AdminInvitePanel />
+      <AdminThankYouPanel attendeeCount={attendeeAccounts} />
       <AdminRsvpTable rows={merged as any} />
     </div>
   );

@@ -9,6 +9,7 @@ type NavItem = { href: string; label: string };
 
 const NAV_PUBLIC: NavItem[] = [
   { href: "/event", label: "Event" },
+  { href: "/album", label: "Album" },
   { href: "/game", label: "Game" }
 ];
 

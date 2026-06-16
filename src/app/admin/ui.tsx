@@ -12,6 +12,82 @@ type Row = {
   rsvp: null | { user_id: string; attending: boolean; party_size: number; updated_at: string | null };
 };
 
+export function AdminThankYouPanel({ attendeeCount }: { attendeeCount: number }) {
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function sendThankYou() {
+    if (loading || !attachment) return;
+    if (!confirm(`Send thank-you email to ${attendeeCount} attending guest${attendeeCount === 1 ? "" : "s"}?`)) return;
+
+    setStatus(null);
+    setLoading(true);
+    try {
+      const form = new FormData();
+      form.append("attachment", attachment);
+      if (message.trim()) form.append("message", message.trim());
+
+      const res = await fetch("/api/admin/thank-you", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus(data?.error ?? "Failed to send emails");
+        return;
+      }
+
+      const failed = Array.isArray(data.failed) ? data.failed.length : 0;
+      setStatus(
+        failed > 0
+          ? `Sent ${data.sent} of ${data.total}. ${failed} failed.`
+          : `Thank-you emails sent to ${data.sent} guest${data.sent === 1 ? "" : "s"}.`
+      );
+    } catch {
+      setStatus("Network error – try again");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-3xl border p-6 shadow-sm">
+      <h2 className="text-xl font-semibold">Send thank-you email (+ photo)</h2>
+      <p className="mt-1 text-sm text-zinc-600">
+        Emails guests who RSVP&apos;d <b>Yes</b> ({attendeeCount} account{attendeeCount === 1 ? "" : "s"}), thanks them,
+        links to the album, and attaches your chosen image.
+      </p>
+
+      <div className="mt-5 grid gap-3">
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(e) => setAttachment(e.target.files?.[0] ?? null)}
+          className="rounded-2xl border px-4 py-3 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-100 file:px-3 file:py-2"
+        />
+        {attachment ? <p className="text-sm text-zinc-600">Selected: {attachment.name}</p> : null}
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Optional personal message (plain text)"
+          rows={4}
+          className="rounded-2xl border px-4 py-3"
+        />
+      </div>
+
+      <button
+        onClick={sendThankYou}
+        disabled={loading || !attachment || attendeeCount === 0}
+        className="mt-4 rounded-2xl bg-zinc-900 px-5 py-3 text-white shadow-sm hover:opacity-90 disabled:opacity-50"
+      >
+        {loading ? "Sending…" : "Send thank-you emails"}
+      </button>
+
+      {status ? <p className="mt-3 text-sm text-zinc-700">{status}</p> : null}
+      <p className="mt-2 text-xs text-zinc-500">One email per guest account, not per party size headcount.</p>
+    </div>
+  );
+}
+
 export function AdminInvitePanel() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
