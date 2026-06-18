@@ -12,27 +12,45 @@ type Row = {
   rsvp: null | { user_id: string; attending: boolean; party_size: number; updated_at: string | null };
 };
 
-export function AdminThankYouPanel({ attendeeCount }: { attendeeCount: number }) {
+export function AdminThankYouPanel({
+  attendeeCount,
+  adminEmail
+}: {
+  attendeeCount: number;
+  adminEmail: string | null;
+}) {
   const [attachment, setAttachment] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
 
-  async function sendThankYou() {
-    if (loading || !attachment) return;
-    if (!confirm(`Send thank-you email to ${attendeeCount} attending guest${attendeeCount === 1 ? "" : "s"}?`)) return;
+  async function submit(test: boolean) {
+    if (!attachment) return;
+    if (loading || testLoading) return;
+    if (!test && !confirm(`Send thank-you email to ${attendeeCount} attending guest${attendeeCount === 1 ? "" : "s"}?`)) {
+      return;
+    }
 
     setStatus(null);
-    setLoading(true);
+    if (test) setTestLoading(true);
+    else setLoading(true);
+
     try {
       const form = new FormData();
       form.append("attachment", attachment);
       if (message.trim()) form.append("message", message.trim());
+      if (test) form.append("test", "true");
 
       const res = await fetch("/api/admin/thank-you", { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) {
         setStatus(data?.error ?? "Failed to send emails");
+        return;
+      }
+
+      if (data.test) {
+        setStatus(`Test email sent to ${adminEmail ?? "your account"}.`);
         return;
       }
 
@@ -46,6 +64,7 @@ export function AdminThankYouPanel({ attendeeCount }: { attendeeCount: number })
       setStatus("Network error – try again");
     } finally {
       setLoading(false);
+      setTestLoading(false);
     }
   }
 
@@ -74,16 +93,27 @@ export function AdminThankYouPanel({ attendeeCount }: { attendeeCount: number })
         />
       </div>
 
-      <button
-        onClick={sendThankYou}
-        disabled={loading || !attachment || attendeeCount === 0}
-        className="mt-4 rounded-2xl bg-zinc-900 px-5 py-3 text-white shadow-sm hover:opacity-90 disabled:opacity-50"
-      >
-        {loading ? "Sending…" : "Send thank-you emails"}
-      </button>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          onClick={() => submit(true)}
+          disabled={testLoading || loading || !attachment || !adminEmail}
+          className="rounded-2xl border px-5 py-3 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:hover:bg-zinc-900/40"
+        >
+          {testLoading ? "Sending test…" : "Send test to my email"}
+        </button>
+        <button
+          onClick={() => submit(false)}
+          disabled={loading || testLoading || !attachment || attendeeCount === 0}
+          className="rounded-2xl bg-zinc-900 px-5 py-3 text-white shadow-sm hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? "Sending…" : "Send thank-you emails"}
+        </button>
+      </div>
 
       {status ? <p className="mt-3 text-sm text-zinc-700">{status}</p> : null}
-      <p className="mt-2 text-xs text-zinc-500">One email per guest account, not per party size headcount.</p>
+      <p className="mt-2 text-xs text-zinc-500">
+        Test goes to {adminEmail ?? "your admin email"} only. Bulk send is one email per guest account, not per party size.
+      </p>
     </div>
   );
 }

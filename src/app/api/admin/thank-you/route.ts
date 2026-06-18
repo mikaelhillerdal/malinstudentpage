@@ -58,6 +58,7 @@ export async function POST(req: Request) {
   const attachment = form.get("attachment");
   const messageRaw = form.get("message");
   const customMessage = typeof messageRaw === "string" && messageRaw.trim() ? messageRaw.trim() : null;
+  const isTest = form.get("test") === "true";
 
   if (!(attachment instanceof File)) {
     return NextResponse.json({ error: "Attachment image is required" }, { status: 400 });
@@ -70,23 +71,41 @@ export async function POST(req: Request) {
   }
 
   const admin = createSupabaseAdmin();
-  const { data: rsvps, error: rsvpError } = await admin.from("rsvps").select("user_id").eq("attending", true);
-  if (rsvpError) return NextResponse.json({ error: rsvpError.message }, { status: 400 });
+  let recipients: { email: string; first_name: string | null }[] = [];
 
-  const attendeeIds = (rsvps ?? []).map((r) => r.user_id);
-  if (attendeeIds.length === 0) {
-    return NextResponse.json({ error: "No attending guests found" }, { status: 400 });
-  }
+  if (isTest) {
+    const { data: adminProfile } = await supabase
+      .from("profiles")
+      .select("email,first_name")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+    const testEmail = adminProfile?.email ?? userData.user.email;
+    if (!testEmail) {
+      return NextResponse.json({ error: "No email on your admin account" }, { status: 400 });
+    }
+    recipients = [{ email: testEmail, first_name: adminProfile?.first_name ?? null }];
+  } else {
+    const { data: rsvps, error: rsvpError } = await admin.from("rsvps").select("user_id").eq("attending", true);
+    if (rsvpError) return NextResponse.json({ error: rsvpError.message }, { status: 400 });
 
-  const { data: profiles, error: profileError } = await admin
-    .from("profiles")
-    .select("id,email,first_name")
-    .in("id", attendeeIds);
-  if (profileError) return NextResponse.json({ error: profileError.message }, { status: 400 });
+    const attendeeIds = (rsvps ?? []).map((r) => r.user_id);
+    if (attendeeIds.length === 0) {
+      return NextResponse.json({ error: "No attending guests found" }, { status: 400 });
+    }
 
-  const recipients = (profiles ?? []).filter((p) => p.email);
-  if (recipients.length === 0) {
-    return NextResponse.json({ error: "No attendee emails found" }, { status: 400 });
+    const { data: profiles, error: profileError } = await admin
+      .from("profiles")
+      .select("id,email,first_name")
+      .in("id", attendeeIds);
+    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 400 });
+
+    recipients = (profiles ?? [])
+      .filter((p) => p.email)
+      .map((p) => ({ email: p.email!, first_name: p.first_name }));
+
+    if (recipients.length === 0) {
+      return NextResponse.json({ error: "No attendee emails found" }, { status: 400 });
+    }
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY!);
@@ -95,6 +114,7 @@ export async function POST(req: Request) {
   const attachmentBuffer = Buffer.from(await attachment.arrayBuffer());
   const attachmentBase64 = attachmentBuffer.toString("base64");
   const attachmentFilename = attachment.name || "celebration-photo.jpg";
+  const subjectPrefix = isTest ? "[TEST] " : "";
 
   const failed: { email: string; error: string }[] = [];
   let sent = 0;
@@ -109,18 +129,18 @@ export async function POST(req: Request) {
     const result = await resend.emails.send({
       from: "Malins Studentfirande <invite@hillerdal.com>",
       replyTo: "mikael.hillerdal@gmail.com",
-      to: [recipient.email!],
-      subject: `Thank you for celebrating with Malin – ${title}`,
+      to: [recipient.email],
+      subject: `${subjectPrefix}Thank you for celebrating with Malin – ${title}`,
       html,
       attachments: [{ filename: attachmentFilename, content: attachmentBase64 }]
     });
 
     if (result.error) {
-      failed.push({ email: recipient.email!, error: result.error.message });
+      failed.push({ email: recipient.email, error: result.error.message });
     } else {
       sent += 1;
     }
   }
 
-  return NextResponse.json({ ok: true, sent, failed, total: recipients.length });
+  return NextResponse.json({ ok: true, sent, failed, total: recipients.length, test: isTest });
 }
